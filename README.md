@@ -102,6 +102,14 @@ cmake --build --preset windows-x64
 - Build type: `RelWithDebInfo` (optimized with debug symbols)
 - Alternative: `cmake --build build_x64 --config Debug`
 
+If you are not using a Visual Studio Developer Command Prompt, run the build with full VC environment setup:
+
+```cmd
+cmd.exe /c "`"%VCVARS%`" x64 >nul && cmake --build --preset windows-x64"
+```
+
+(Set `%VCVARS%` to the path of `vcvarsall.bat` — e.g. `D:\VS\Product\VC\Auxiliary\Build\vcvarsall.bat`)
+
 ### Build installer (NSIS)
 
 ```powershell
