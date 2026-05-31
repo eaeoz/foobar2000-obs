@@ -123,7 +123,7 @@ static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap, Gdiplus::Graphics *gr
 	if (wtitle[0] != L'\0' && wcslen(wtitle) > 0) {
 		Gdiplus::RectF title_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y + 80),
 					  (Gdiplus::REAL)(COMPOSITE_WIDTH - TEXT_X - 20),
-					  (Gdiplus::REAL)100);
+					  (Gdiplus::REAL)120);
 		graphics->DrawString(wtitle, -1, title_font, title_rect, &format, &gray_brush);
 	}
 
@@ -480,6 +480,11 @@ static void poll_foobar2000(struct foobar2000_data *s)
 	obs_log(LOG_INFO, "[fb2k] polling foobar2000... EnumWindows hwnd=%p", hwnd);
 
 	if (!hwnd) {
+		if (s->artist[0] != '\0' || s->title[0] != '\0') {
+			s->artist[0] = '\0';
+			s->title[0] = '\0';
+			update_composite_bitmap(s);
+		}
 		return;
 	}
 

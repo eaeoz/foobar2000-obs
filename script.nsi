@@ -1,16 +1,17 @@
 !include "MUI2.nsh"
 
-Name "foobar2000-obs"
+Name "foobar2000-obs by Sedat ERGOZ"
 OutFile "foobar2000-obs-installer.exe"
 InstallDir "$PROGRAMFILES64\obs-studio"
 RequestExecutionLevel admin
+BrandingText "foobar2000-obs by Sedat ERGOZ"
 
 VIProductVersion "1.0.0.0"
 VIAddVersionKey "ProductName" "foobar2000-obs"
 VIAddVersionKey "CompanyName" "Sedat ERGOZ"
-VIAddVersionKey "FileDescription" "OBS Plugin for foobar2000 integration"
+VIAddVersionKey "FileDescription" "foobar2000-obs - OBS plugin by Sedat ERGOZ"
 VIAddVersionKey "ProductVersion" "1.0.0"
-VIAddVersionKey "Comments" "sedatergoz@gmail.com"
+VIAddVersionKey "Comments" "foobar2000-obs by Sedat ERGOZ - sedatergoz@gmail.com"
 
 Var OBSPath
 
@@ -83,9 +84,16 @@ fail:
 ok:
 
     ; --------------------------
-    ; INSTALL DLL ONLY (safe)
+    ; INSTALL PLUGIN DLL & PDB
     ; --------------------------
     SetOutPath "$0\obs-plugins\64bit"
-    File /r "build_x64\rundir\RelWithDebInfo\*.dll"
+    File "build_x64\rundir\RelWithDebInfo\foobar2000-obs.dll"
+    File "build_x64\rundir\RelWithDebInfo\foobar2000-obs.pdb"
+
+    ; --------------------------
+    ; INSTALL DATA FILES (locale, etc.)
+    ; --------------------------
+    SetOutPath "$0\data\obs-plugins\foobar2000-obs"
+    File /r "build_x64\rundir\RelWithDebInfo\foobar2000-obs"
 
 SectionEnd
