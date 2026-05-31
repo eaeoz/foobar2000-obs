@@ -36,14 +36,14 @@ void foobar2000_module_unload(void)
 }
 
 #define POLL_INTERVAL_NS 1000000000ULL
-#define COMPOSITE_WIDTH 600
-#define COMPOSITE_HEIGHT 300
+#define COMPOSITE_WIDTH 750
+#define COMPOSITE_HEIGHT 340
 #define ART_SIZE 250
-#define ART_PADDING 25
-#define TEXT_X (ART_PADDING + ART_SIZE + 15)
-#define TEXT_START_Y 80
+#define ART_PADDING 35
+#define TEXT_X (ART_PADDING + ART_SIZE + 20)
+#define TEXT_START_Y 130
 #define TITLE_FONT_SIZE 20
-#define ARTIST_FONT_SIZE 16
+#define ARTIST_FONT_SIZE 26
 
 struct foobar2000_data {
 	obs_source_t *source;
@@ -77,8 +77,8 @@ static Gdiplus::Font *create_gdip_font(const wchar_t *family, float size, int st
 static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap, Gdiplus::Graphics *graphics,
 				  const char *artist, const char *title)
 {
-	Gdiplus::SolidBrush text_brush(Gdiplus::Color(255, 220, 220, 220));
-	Gdiplus::SolidBrush title_brush(Gdiplus::Color(255, 255, 255, 255));
+	Gdiplus::SolidBrush text_brush(Gdiplus::Color(255, 180, 180, 185));
+	Gdiplus::SolidBrush artist_brush(Gdiplus::Color(255, 255, 255, 255));
 
 	wchar_t wtitle[512];
 	wchar_t wartist[512];
@@ -90,26 +90,39 @@ static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap, Gdiplus::Graphics *gr
 	format.SetLineAlignment(Gdiplus::StringAlignmentNear);
 	format.SetTrimming(Gdiplus::StringTrimmingEllipsisCharacter);
 
-	Gdiplus::RectF title_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)TEXT_START_Y,
-				  (Gdiplus::REAL)(COMPOSITE_WIDTH - TEXT_X - 15),
-				  (Gdiplus::REAL)60);
+	Gdiplus::StringFormat nowplaying_format;
+	nowplaying_format.SetAlignment(Gdiplus::StringAlignmentNear);
+	nowplaying_format.SetLineAlignment(Gdiplus::StringAlignmentNear);
 
+	Gdiplus::Font *label_font = create_gdip_font(L"Segoe UI", 10,
+						     Gdiplus::FontStyleBold);
 	Gdiplus::Font *title_font = create_gdip_font(L"Segoe UI", TITLE_FONT_SIZE,
 						     Gdiplus::FontStyleBold);
 	Gdiplus::Font *artist_font = create_gdip_font(L"Segoe UI", ARTIST_FONT_SIZE,
-						      Gdiplus::FontStyleRegular);
+						      Gdiplus::FontStyleBold);
+
+	int label_y = TEXT_START_Y - 30;
+	Gdiplus::SolidBrush label_brush(Gdiplus::Color(120, 120, 120, 130));
+	graphics->DrawString(L"NOW PLAYING", -1, label_font,
+			     Gdiplus::RectF((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)label_y,
+					    (Gdiplus::REAL)200, (Gdiplus::REAL)16),
+			     &nowplaying_format, &label_brush);
+
+	if (wartist[0] != L'\0' && wcslen(wartist) > 0) {
+		Gdiplus::RectF artist_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y - 5),
+					   (Gdiplus::REAL)(COMPOSITE_WIDTH - TEXT_X - 20),
+					   (Gdiplus::REAL)50);
+		graphics->DrawString(wartist, -1, artist_font, artist_rect, &format, &artist_brush);
+	}
 
 	if (wtitle[0] != L'\0' && wcslen(wtitle) > 0) {
-		graphics->DrawString(wtitle, -1, title_font, title_rect, &format, &title_brush);
+		Gdiplus::RectF title_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y + 45),
+					  (Gdiplus::REAL)(COMPOSITE_WIDTH - TEXT_X - 20),
+					  (Gdiplus::REAL)120);
+		graphics->DrawString(wtitle, -1, title_font, title_rect, &format, &text_brush);
 	}
 
-	Gdiplus::RectF artist_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y + 60),
-				   (Gdiplus::REAL)(COMPOSITE_WIDTH - TEXT_X - 15),
-				   (Gdiplus::REAL)40);
-	if (wartist[0] != L'\0' && wcslen(wartist) > 0) {
-		graphics->DrawString(wartist, -1, artist_font, artist_rect, &format, &text_brush);
-	}
-
+	delete label_font;
 	delete title_font;
 	delete artist_font;
 }
@@ -379,7 +392,11 @@ static void draw_album_art(Gdiplus::Graphics &graphics, Gdiplus::Bitmap *art)
 	}
 	int art_x = ART_PADDING + (ART_SIZE - draw_w) / 2;
 	int art_y = (COMPOSITE_HEIGHT - draw_h) / 2;
+
 	graphics.DrawImage(art, art_x, art_y, draw_w, draw_h);
+
+	Gdiplus::Pen border_pen(Gdiplus::Color(50, 255, 255, 255), 1.0f);
+	graphics.DrawRectangle(&border_pen, art_x, art_y, draw_w, draw_h);
 }
 
 static void update_composite_bitmap(struct foobar2000_data *s)
@@ -395,6 +412,8 @@ static void update_composite_bitmap(struct foobar2000_data *s)
 	Gdiplus::Graphics graphics(bitmap);
 	graphics.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
 	graphics.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAlias);
+	graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+
 	graphics.Clear(Gdiplus::Color(0, 0, 0, 0));
 
 	Gdiplus::Bitmap *art = NULL;
