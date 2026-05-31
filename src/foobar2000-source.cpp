@@ -463,7 +463,7 @@ static BOOL CALLBACK fb2k_enum_windows(HWND hwnd, LPARAM lparam)
 
 	wchar_t title[1024];
 	GetWindowTextW(hwnd, title, 1024);
-	if (wcsstr(title, L"foobar2000")) {
+	if (wcsstr(title, L"foobar2000") && !wcsstr(title, L"-obs")) {
 		info->hwnd = hwnd;
 		return FALSE;
 	}
@@ -527,6 +527,8 @@ static void poll_foobar2000(struct foobar2000_data *s)
 			obs_log(LOG_INFO, "[fb2k] parsed: artist='%s' title='%s'", artist, title);
 		} else {
 			strncpy_s(title, 512, text_utf8, _TRUNCATE);
+			if (strncmp(title, "foobar2000", 10) == 0)
+				title[0] = '\0';
 			obs_log(LOG_INFO, "[fb2k] parsed (no dash): title='%s'", title);
 		}
 	}
@@ -688,10 +690,6 @@ static obs_properties_t *source_get_properties(void *data)
 {
 	UNUSED_PARAMETER(data);
 	obs_properties_t *props = obs_properties_create();
-	obs_properties_add_text(props, "track_info", obs_module_text("TrackInfo"),
-				OBS_TEXT_INFO);
-	obs_properties_add_path(props, "music_dir", obs_module_text("MusicDirectory"),
-				OBS_PATH_DIRECTORY, NULL, NULL);
 	return props;
 }
 
