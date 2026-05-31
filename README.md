@@ -29,11 +29,34 @@ The overlay is rendered with GDI+ into a 750×340 pixel bitmap, converted to an 
 
 ## Installation
 
-### Binary release
+Download the [latest release](https://github.com/eaeoz/foobar2000-obs/releases/latest) and choose one of the methods below.
 
-1. Download the latest `foobar2000-obs.dll` and `data/` folder from [Releases](../../releases)
-2. Copy `foobar2000-obs.dll` to `{OBS_DIR}\obs-plugins\64bit\`
-3. Copy the `data/` folder contents to `{OBS_DIR}\data\obs-plugins\foobar2000-obs\`
+### Option 1 — EXE Installer (recommended)
+
+[Download `foobar2000-obs-installer.exe`](https://github.com/eaeoz/foobar2000-obs/releases/download/1.0.0/foobar2000-obs-installer.exe)
+
+Run the installer — it automatically detects your OBS Studio directory and copies all files to the correct locations. No manual steps required.
+
+### Option 2 — Manual ZIP (for portable / multi-machine setups)
+
+[Download `foobar2000-obs.zip`](https://github.com/eaeoz/foobar2000-obs/releases/download/1.0.0/foobar2000-obs.zip)
+
+The ZIP contains a `foobar2000-obs` folder with this structure:
+
+```
+foobar2000-obs/
+├── foobar2000-obs.dll        # Plugin binary
+├── foobar2000-obs.pdb        # Debug symbols (optional)
+└── locale/
+    └── en-US.ini             # Localization file
+```
+
+1. Extract the ZIP
+2. Copy `foobar2000-obs.dll` and `foobar2000-obs.pdb` to  
+   `{OBS_DIR}\obs-plugins\64bit\`
+3. Copy the `locale\` folder to  
+   `{OBS_DIR}\data\obs-plugins\foobar2000-obs\locale\`  
+   (create the `foobar2000-obs` folder inside `data\obs-plugins\` if it doesn't exist)
 4. Restart OBS Studio
 
 ### Build from source
