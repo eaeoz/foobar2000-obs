@@ -84,16 +84,13 @@ fail:
 ok:
 
     ; --------------------------
-    ; INSTALL PLUGIN DLL & PDB
+    ; INSTALL ALL FILES
     ; --------------------------
     SetOutPath "$0\obs-plugins\64bit"
     File "build_x64\rundir\RelWithDebInfo\foobar2000-obs.dll"
     File "build_x64\rundir\RelWithDebInfo\foobar2000-obs.pdb"
 
-    ; --------------------------
-    ; INSTALL DATA FILES (locale, etc.)
-    ; --------------------------
     SetOutPath "$0\data\obs-plugins\foobar2000-obs"
-    File /r "build_x64\rundir\RelWithDebInfo\foobar2000-obs"
+    File /r "build_x64\rundir\RelWithDebInfo\foobar2000-obs\*.*"
 
 SectionEnd
