@@ -37,7 +37,7 @@ void foobar2000_module_unload(void)
 
 #define POLL_INTERVAL_NS 1000000000ULL
 #define COMPOSITE_WIDTH 750
-#define COMPOSITE_HEIGHT 340
+#define COMPOSITE_HEIGHT 400
 #define ART_SIZE 250
 #define ART_PADDING 35
 #define TEXT_X (ART_PADDING + ART_SIZE + 20)
@@ -90,14 +90,12 @@ static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap, Gdiplus::Graphics *gr
 	MultiByteToWideChar(CP_UTF8, 0, artist, -1, wartist, 512);
 	MultiByteToWideChar(CP_UTF8, 0, title, -1, wtitle, 512);
 
-	Gdiplus::StringFormat format;
-	format.SetAlignment(Gdiplus::StringAlignmentNear);
-	format.SetLineAlignment(Gdiplus::StringAlignmentNear);
+	Gdiplus::StringFormat format = Gdiplus::StringFormat::GenericTypographic();
+	format.SetFormatFlags(format.GetFormatFlags() & ~Gdiplus::StringFormatFlagsLineLimit);
 	format.SetTrimming(Gdiplus::StringTrimmingEllipsisCharacter);
 
-	Gdiplus::StringFormat nowplaying_format;
-	nowplaying_format.SetAlignment(Gdiplus::StringAlignmentNear);
-	nowplaying_format.SetLineAlignment(Gdiplus::StringAlignmentNear);
+	Gdiplus::StringFormat nowplaying_format = Gdiplus::StringFormat::GenericTypographic();
+	nowplaying_format.SetFormatFlags(nowplaying_format.GetFormatFlags() & ~Gdiplus::StringFormatFlagsLineLimit);
 
 	Gdiplus::Font *label_font = create_gdip_font(L"Segoe UI", LABEL_FONT_SIZE,
 						     Gdiplus::FontStyleBold);
@@ -106,25 +104,58 @@ static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap, Gdiplus::Graphics *gr
 	Gdiplus::Font *artist_font = create_gdip_font(L"Segoe UI", ARTIST_FONT_SIZE,
 						      Gdiplus::FontStyleBold);
 
-	int label_y = TEXT_START_Y - 40;
-	Gdiplus::SolidBrush label_brush(Gdiplus::Color(120, 120, 120, 130));
-	graphics->DrawString(L"NOW PLAYING", -1, label_font,
-			     Gdiplus::RectF((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)label_y,
-					    (Gdiplus::REAL)200, (Gdiplus::REAL)22),
-			     &nowplaying_format, &label_brush);
+	const Gdiplus::REAL text_width = (Gdiplus::REAL)(COMPOSITE_WIDTH - TEXT_X - 20);
+	const Gdiplus::REAL gap = 24.0f;
+	const Gdiplus::REAL measure_height = (Gdiplus::REAL)COMPOSITE_HEIGHT;
+
+	Gdiplus::RectF measure_rect((Gdiplus::REAL)TEXT_X, 0, text_width, measure_height);
+
+	Gdiplus::RectF label_bounds;
+	graphics->MeasureString(L"NOW PLAYING", -1, label_font, measure_rect,
+				&nowplaying_format, &label_bounds);
+
+	Gdiplus::RectF artist_bounds;
+	if (wartist[0] != L'\0' && wcslen(wartist) > 0) {
+		graphics->MeasureString(wartist, -1, artist_font, measure_rect,
+					&format, &artist_bounds);
+	}
+
+	Gdiplus::RectF title_bounds;
+	if (wtitle[0] != L'\0' && wcslen(wtitle) > 0) {
+		graphics->MeasureString(wtitle, -1, title_font, measure_rect,
+					&format, &title_bounds);
+	}
+
+	Gdiplus::REAL total_height = label_bounds.Height;
+	if (wartist[0] != L'\0' && wcslen(wartist) > 0)
+		total_height += gap + artist_bounds.Height;
+	if (wtitle[0] != L'\0' && wcslen(wtitle) > 0)
+		total_height += gap + title_bounds.Height;
+	Gdiplus::REAL current_y = ((Gdiplus::REAL)COMPOSITE_HEIGHT - total_height) / 2.0f;
+
+	{
+		Gdiplus::SolidBrush label_brush(Gdiplus::Color(120, 120, 120, 130));
+		graphics->DrawString(L"NOW PLAYING", -1, label_font,
+				     Gdiplus::RectF((Gdiplus::REAL)TEXT_X, current_y,
+						    (Gdiplus::REAL)200, label_bounds.Height),
+				     &nowplaying_format, &label_brush);
+	}
+
+	current_y += label_bounds.Height + gap;
 
 	if (wartist[0] != L'\0' && wcslen(wartist) > 0) {
-		Gdiplus::RectF artist_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y - 20),
-					   (Gdiplus::REAL)(COMPOSITE_WIDTH - TEXT_X - 20),
-					   (Gdiplus::REAL)100);
-		graphics->DrawString(wartist, -1, artist_font, artist_rect, &format, &white_brush);
+		graphics->DrawString(wartist, -1, artist_font,
+				     Gdiplus::RectF((Gdiplus::REAL)TEXT_X, current_y,
+						    text_width, artist_bounds.Height),
+				     &format, &white_brush);
+		current_y += artist_bounds.Height + gap;
 	}
 
 	if (wtitle[0] != L'\0' && wcslen(wtitle) > 0) {
-		Gdiplus::RectF title_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y + 80),
-					  (Gdiplus::REAL)(COMPOSITE_WIDTH - TEXT_X - 20),
-					  (Gdiplus::REAL)120);
-		graphics->DrawString(wtitle, -1, title_font, title_rect, &format, &gray_brush);
+		graphics->DrawString(wtitle, -1, title_font,
+				     Gdiplus::RectF((Gdiplus::REAL)TEXT_X, current_y,
+						    text_width, title_bounds.Height),
+				     &format, &gray_brush);
 	}
 
 	delete label_font;
