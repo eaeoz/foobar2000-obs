@@ -1,59 +1,121 @@
-# OBS Plugin Template
+# foobar2000 Now Playing
 
-## Introduction
+An [OBS Studio](https://obsproject.com/) plugin that displays the currently playing track from foobar2000 as an overlay source.
 
-The plugin template is meant to be used as a starting point for OBS Studio plugin development. It includes:
+## Features
 
-* Boilerplate plugin source code
-* A CMake project file
-* GitHub Actions workflows and repository actions
+- Shows artist name, track title, and album art from foobar2000
+- Reads track info directly from the foobar2000 window title — no additional components or IPC needed
+- Two album art sources:
+  - **foobar2000 album-art cache** (`%APPDATA%\foobar2000[-v2]\album-art\`)
+  - **Embedded art** extracted from audio files via Windows `IShellItemImageFactory`
+- Automatically searches for audio files in your music directories when cache is unavailable
+- Transparent background — blends over any scene
+- Clears the display when playback stops or foobar2000 is closed
 
-## Supported Build Environments
+## How it works
 
-| Platform  | Tool   |
-|-----------|--------|
-| Windows   | Visual Studio 17 2022 |
-| macOS     | XCode 16.0 |
-| Windows, macOS  | CMake 3.30.5 |
-| Ubuntu 24.04 | CMake 3.28.3 |
-| Ubuntu 24.04 | `ninja-build` |
-| Ubuntu 24.04 | `pkg-config`
-| Ubuntu 24.04 | `build-essential` |
+Every second, the plugin polls the foobar2000 window title via `EnumWindows` / `GetWindowText`. The window title format is `Artist - Title [foobar2000]`, which it parses to extract artist and track name.
 
-## Quick Start
+Album art is resolved by checking foobar2000's album-art cache first, then falling back to embedded art extracted from matching audio files found in known music directories.
 
-An absolute bare-bones [Quick Start Guide](https://github.com/obsproject/obs-plugintemplate/wiki/Quick-Start-Guide) is available in the wiki.
+The overlay is rendered with GDI+ into a 750×340 pixel bitmap, converted to an OBS texture, and drawn as a sprite.
 
-## Documentation
+## Requirements
 
-All documentation can be found in the [Plugin Template Wiki](https://github.com/obsproject/obs-plugintemplate/wiki).
+- **OBS Studio** ≥ 31.1.1
+- **foobar2000** running on the same machine
+- **Windows** 10 or later (x64)
 
-Suggested reading to get up and running:
+## Installation
 
-* [Getting started](https://github.com/obsproject/obs-plugintemplate/wiki/Getting-Started)
-* [Build system requirements](https://github.com/obsproject/obs-plugintemplate/wiki/Build-System-Requirements)
-* [Build system options](https://github.com/obsproject/obs-plugintemplate/wiki/CMake-Build-System-Options)
+### Binary release
 
-## GitHub Actions & CI
+1. Download the latest `foobar2000-obs.dll` and `data/` folder from [Releases](../../releases)
+2. Copy `foobar2000-obs.dll` to `{OBS_DIR}\obs-plugins\64bit\`
+3. Copy the `data/` folder contents to `{OBS_DIR}\data\obs-plugins\foobar2000-obs\`
+4. Restart OBS Studio
 
-Default GitHub Actions workflows are available for the following repository actions:
+### Build from source
 
-* `push`: Run for commits or tags pushed to `master` or `main` branches.
-* `pr-pull`: Run when a Pull Request has been pushed or synchronized.
-* `dispatch`: Run when triggered by the workflow dispatch in GitHub's user interface.
-* `build-project`: Builds the actual project and is triggered by other workflows.
-* `check-format`: Checks CMake and plugin source code formatting and is triggered by other workflows.
+See [Development](#development) below.
 
-The workflows make use of GitHub repository actions (contained in `.github/actions`) and build scripts (contained in `.github/scripts`) which are not needed for local development, but might need to be adjusted if additional/different steps are required to build the plugin.
+## Usage in OBS
 
-### Retrieving build artifacts
+1. Add a new **Source** → **foobar2000 Now Playing** to your scene
+2. (Optional) Set a custom **Music Directory** in the source properties to help locate audio files for embedded album art extraction
+3. Make sure foobar2000 is running and playing a track
 
-Successful builds on GitHub Actions will produce build artifacts that can be downloaded for testing. These artifacts are commonly simple archives and will not contain package installers or installation programs.
+The overlay is 750×340 px. Scale or position it as needed.
 
-### Building a Release
+## Development
 
-To create a release, an appropriately named tag needs to be pushed to the `main`/`master` branch using semantic versioning (e.g., `12.3.4`, `23.4.5-beta2`). A draft release will be created on the associated repository with generated installer packages or installation programs attached as release artifacts.
+### Prerequisites
 
-## Signing and Notarizing on macOS
+- **Visual Studio 2022** (or later) with **Desktop development with C++** workload
+- **CMake** ≥ 3.28 (bundled with Visual Studio)
+- **Git**
+- OBS Studio installed (for runtime testing)
 
-Basic concepts of codesigning and notarization on macOS are explained in the correspodning [Wiki article](https://github.com/obsproject/obs-plugintemplate/wiki/Codesigning-On-macOS) which has a specific section for the [GitHub Actions setup](https://github.com/obsproject/obs-plugintemplate/wiki/Codesigning-On-macOS#setting-up-code-signing-for-github-actions).
+### Clone
+
+```powershell
+git clone https://github.com/yourusername/foobar2000-obs
+cd foobar2000-obs
+```
+
+### Setup dependencies
+
+The build system fetches prebuilt OBS SDK and dependencies automatically. Check `.deps/` after the first configure step.
+
+### Build
+
+```powershell
+cmake --preset windows-x64
+cmake --build --preset windows-x64
+```
+
+- Output: `build_x64/RelWithDebInfo/foobar2000-obs.dll`
+- Build type: `RelWithDebInfo` (optimized with debug symbols)
+- Alternative: `cmake --build build_x64 --config Debug`
+
+### Install to OBS
+
+```powershell
+.\install-plugin.ps1                        # auto-detect OBS dir
+.\install-plugin.ps1 -ObsDir "C:\Program Files\obs-studio"
+```
+
+### Formatting
+
+```powershell
+build-aux\run-clang-format                   # C/C++ (uses clang-format-19)
+build-aux\run-clang-format --check           # check-only
+build-aux\run-gersemi                        # CMake (uses gersemi >= 0.12.0)
+```
+
+### Project structure
+
+| Path | Purpose |
+|------|---------|
+| `src/foobar2000-source.cpp` | Main source implementation (C++, GDI+) |
+| `src/plugin-main.c` | OBS module entrypoint |
+| `src/plugin-support.c.in` | CMake-configured support template |
+| `data/locale/en-US.ini` | Localizable strings |
+| `CMakeLists.txt` | Build definition |
+| `CMakePresets.json` | Build presets (Windows, macOS, Linux) |
+| `buildspec.json` | Plugin metadata and dependency versions |
+| `install-plugin.ps1` | OBS installation helper |
+| `.deps/` | Prebuilt OBS SDK (not in git) |
+
+### Platform support
+
+| Platform | Generator | Build dir |
+|----------|-----------|-----------|
+| Windows | Visual Studio 18 2026 | `build_x64` |
+| macOS | Xcode 16.0 | `build_macos` |
+| Ubuntu | Ninja | `build_x86_64` |
+
+## License
+
+GNU General Public License v2.0. See [LICENSE](LICENSE).

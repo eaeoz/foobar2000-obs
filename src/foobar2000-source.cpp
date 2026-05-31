@@ -42,8 +42,9 @@ void foobar2000_module_unload(void)
 #define ART_PADDING 35
 #define TEXT_X (ART_PADDING + ART_SIZE + 20)
 #define TEXT_START_Y 130
-#define TITLE_FONT_SIZE 20
-#define ARTIST_FONT_SIZE 26
+#define LABEL_FONT_SIZE 20
+#define TITLE_FONT_SIZE 42
+#define ARTIST_FONT_SIZE 54
 
 struct foobar2000_data {
 	obs_source_t *source;
@@ -77,6 +78,10 @@ static Gdiplus::Font *create_gdip_font(const wchar_t *family, float size, int st
 static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap, Gdiplus::Graphics *graphics,
 				  const char *artist, const char *title)
 {
+	if ((!artist || artist[0] == '\0') && (!title || title[0] == '\0')) {
+		return;
+	}
+
 	Gdiplus::SolidBrush text_brush(Gdiplus::Color(255, 180, 180, 185));
 	Gdiplus::SolidBrush artist_brush(Gdiplus::Color(255, 255, 255, 255));
 
@@ -94,31 +99,31 @@ static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap, Gdiplus::Graphics *gr
 	nowplaying_format.SetAlignment(Gdiplus::StringAlignmentNear);
 	nowplaying_format.SetLineAlignment(Gdiplus::StringAlignmentNear);
 
-	Gdiplus::Font *label_font = create_gdip_font(L"Segoe UI", 10,
+	Gdiplus::Font *label_font = create_gdip_font(L"Segoe UI", LABEL_FONT_SIZE,
 						     Gdiplus::FontStyleBold);
 	Gdiplus::Font *title_font = create_gdip_font(L"Segoe UI", TITLE_FONT_SIZE,
 						     Gdiplus::FontStyleBold);
 	Gdiplus::Font *artist_font = create_gdip_font(L"Segoe UI", ARTIST_FONT_SIZE,
 						      Gdiplus::FontStyleBold);
 
-	int label_y = TEXT_START_Y - 30;
+	int label_y = TEXT_START_Y - 40;
 	Gdiplus::SolidBrush label_brush(Gdiplus::Color(120, 120, 120, 130));
 	graphics->DrawString(L"NOW PLAYING", -1, label_font,
 			     Gdiplus::RectF((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)label_y,
-					    (Gdiplus::REAL)200, (Gdiplus::REAL)16),
+					    (Gdiplus::REAL)200, (Gdiplus::REAL)22),
 			     &nowplaying_format, &label_brush);
 
 	if (wartist[0] != L'\0' && wcslen(wartist) > 0) {
-		Gdiplus::RectF artist_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y - 5),
+		Gdiplus::RectF artist_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y - 15),
 					   (Gdiplus::REAL)(COMPOSITE_WIDTH - TEXT_X - 20),
-					   (Gdiplus::REAL)50);
+					   (Gdiplus::REAL)60);
 		graphics->DrawString(wartist, -1, artist_font, artist_rect, &format, &artist_brush);
 	}
 
 	if (wtitle[0] != L'\0' && wcslen(wtitle) > 0) {
-		Gdiplus::RectF title_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y + 45),
+		Gdiplus::RectF title_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y + 55),
 					  (Gdiplus::REAL)(COMPOSITE_WIDTH - TEXT_X - 20),
-					  (Gdiplus::REAL)120);
+					  (Gdiplus::REAL)150);
 		graphics->DrawString(wtitle, -1, title_font, title_rect, &format, &text_brush);
 	}
 
@@ -418,16 +423,18 @@ static void update_composite_bitmap(struct foobar2000_data *s)
 
 	Gdiplus::Bitmap *art = NULL;
 
-	try_load_cached_album_art(&art);
+	if (s->artist[0] && s->title[0]) {
+		try_load_cached_album_art(&art);
 
-	if (!art && s->artist[0] && s->title[0]) {
-		obs_log(LOG_INFO, "[fb2k] cache miss, trying embedded album art");
-		try_load_embedded_album_art(s, &art);
-	}
+		if (!art) {
+			obs_log(LOG_INFO, "[fb2k] cache miss, trying embedded album art");
+			try_load_embedded_album_art(s, &art);
+		}
 
-	if (art) {
-		draw_album_art(graphics, art);
-		delete art;
+		if (art) {
+			draw_album_art(graphics, art);
+			delete art;
+		}
 	}
 
 	render_text_to_bitmap(bitmap, &graphics, s->artist, s->title);
@@ -521,11 +528,6 @@ static void poll_foobar2000(struct foobar2000_data *s)
 
 	if (strcmp(s->artist, old_artist) != 0 || strcmp(s->title, old_title) != 0) {
 		s->last_found_path_valid = false;
-	}
-
-	if (artist[0] == '\0' && title[0] == '\0') {
-		obs_log(LOG_INFO, "[fb2k] empty artist/title, skipping bitmap update");
-		return;
 	}
 
 	obs_log(LOG_INFO, "[fb2k] calling update_composite_bitmap");
