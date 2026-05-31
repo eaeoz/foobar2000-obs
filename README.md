@@ -41,22 +41,22 @@ Run the installer — it automatically detects your OBS Studio directory and cop
 
 [Download `foobar2000-obs.zip`](https://github.com/eaeoz/foobar2000-obs/releases/download/1.0.0/foobar2000-obs.zip)
 
-The ZIP contains a `foobar2000-obs` folder with this structure:
+The ZIP contains these files:
 
 ```
+foobar2000-obs.dll        # Plugin binary
+foobar2000-obs.pdb        # Debug symbols (optional)
 foobar2000-obs/
-├── foobar2000-obs.dll        # Plugin binary
-├── foobar2000-obs.pdb        # Debug symbols (optional)
 └── locale/
-    └── en-US.ini             # Localization file
+    └── en-US.ini          # Localization file
 ```
 
 1. Extract the ZIP
 2. Copy `foobar2000-obs.dll` and `foobar2000-obs.pdb` to  
    `{OBS_DIR}\obs-plugins\64bit\`
-3. Copy the `locale\` folder to  
-   `{OBS_DIR}\data\obs-plugins\foobar2000-obs\locale\`  
-   (create the `foobar2000-obs` folder inside `data\obs-plugins\` if it doesn't exist)
+3. Copy the entire `foobar2000-obs` folder to  
+   `{OBS_DIR}\data\obs-plugins\`  
+   (result: `{OBS_DIR}\data\obs-plugins\foobar2000-obs\locale\en-US.ini`)
 4. Restart OBS Studio
 
 ### Build from source
