@@ -43,8 +43,8 @@ void foobar2000_module_unload(void)
 #define TEXT_X (ART_PADDING + ART_SIZE + 20)
 #define TEXT_START_Y 130
 #define LABEL_FONT_SIZE 14
-#define TITLE_FONT_SIZE 30
-#define ARTIST_FONT_SIZE 38
+#define TITLE_FONT_SIZE 40
+#define ARTIST_FONT_SIZE 48
 
 struct foobar2000_data {
 	obs_source_t *source;
