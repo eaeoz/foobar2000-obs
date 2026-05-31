@@ -2,6 +2,7 @@
 
 Name "foobar2000-obs"
 OutFile "foobar2000-obs-installer.exe"
+InstallDir "$PROGRAMFILES64\obs-studio"
 RequestExecutionLevel admin
 
 VIProductVersion "1.0.0.0"
@@ -21,26 +22,51 @@ Function .onInit
 
     SetRegView 64
 
+    ; Try InstallLocation from registry
     ReadRegStr $OBSPath HKLM \
     "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\OBS Studio" \
     "InstallLocation"
+    IfFileExists "$OBSPath\bin\64bit\obs64.exe" setpath
 
-    IfFileExists "$OBSPath\bin\64bit\obs64.exe" 0 try_pf64
-    Goto done
+    ; Try DisplayIcon (full path to obs64.exe)
+    ReadRegStr $0 HKLM \
+    "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\OBS Studio" \
+    "DisplayIcon"
+    StrCpy $1 $0 20 -20
+    StrCmp $1 "\bin\64bit\obs64.exe" 0 try_wow
+    StrCpy $OBSPath $0 -20
+    IfFileExists "$OBSPath\bin\64bit\obs64.exe" setpath
+
+try_wow:
+    ; Try WOW6432Node InstallLocation
+    ReadRegStr $OBSPath HKLM \
+    "SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\OBS Studio" \
+    "InstallLocation"
+    IfFileExists "$OBSPath\bin\64bit\obs64.exe" setpath
+
+    ; Try WOW6432Node DisplayIcon
+    ReadRegStr $0 HKLM \
+    "SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\OBS Studio" \
+    "DisplayIcon"
+    StrCpy $1 $0 20 -20
+    StrCmp $1 "\bin\64bit\obs64.exe" 0 try_pf64
+    StrCpy $OBSPath $0 -20
+    IfFileExists "$OBSPath\bin\64bit\obs64.exe" setpath
 
 try_pf64:
     StrCpy $OBSPath "$PROGRAMFILES64\obs-studio"
-    IfFileExists "$OBSPath\bin\64bit\obs64.exe" done try_pf32
+    IfFileExists "$OBSPath\bin\64bit\obs64.exe" setpath
 
 try_pf32:
     StrCpy $OBSPath "$PROGRAMFILES\obs-studio"
-    IfFileExists "$OBSPath\bin\64bit\obs64.exe" done fail
+    IfFileExists "$OBSPath\bin\64bit\obs64.exe" setpath
 
-fail:
-    StrCpy $OBSPath ""
+    Goto done
+
+setpath:
+    StrCpy $INSTDIR "$OBSPath"
 
 done:
-    StrCpy $INSTDIR "$OBSPath"
 
 FunctionEnd
 
