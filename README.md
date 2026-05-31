@@ -79,6 +79,22 @@ cmake --build --preset windows-x64
 - Build type: `RelWithDebInfo` (optimized with debug symbols)
 - Alternative: `cmake --build build_x64 --config Debug`
 
+### Build installer (NSIS)
+
+```powershell
+makensis script.nsi
+```
+
+The NSIS script `script.nsi` creates `foobar2000-obs-installer.exe` which installs:
+
+| File | Destination |
+|------|-------------|
+| `foobar2000-obs.dll` | `{OBS}\obs-plugins\64bit\` |
+| `foobar2000-obs.pdb` | `{OBS}\obs-plugins\64bit\` |
+| `locale\en-US.ini` | `{OBS}\data\obs-plugins\foobar2000-obs\locale\` |
+
+The installer auto-detects the OBS Studio directory from the registry.
+
 ### Install to OBS
 
 ```powershell
@@ -106,6 +122,7 @@ build-aux\run-gersemi                        # CMake (uses gersemi >= 0.12.0)
 | `CMakePresets.json` | Build presets (Windows, macOS, Linux) |
 | `buildspec.json` | Plugin metadata and dependency versions |
 | `install-plugin.ps1` | OBS installation helper |
+| `script.nsi` | NSIS installer script (builds `foobar2000-obs-installer.exe`) |
 | `.deps/` | Prebuilt OBS SDK (not in git) |
 
 ### Platform support
