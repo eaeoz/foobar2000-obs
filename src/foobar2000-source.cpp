@@ -82,13 +82,13 @@ static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap, Gdiplus::Graphics *gr
 		return;
 	}
 
-	Gdiplus::SolidBrush text_brush(Gdiplus::Color(255, 180, 180, 185));
-	Gdiplus::SolidBrush artist_brush(Gdiplus::Color(255, 255, 255, 255));
+	Gdiplus::SolidBrush white_brush(Gdiplus::Color(255, 255, 255, 255));
+	Gdiplus::SolidBrush gray_brush(Gdiplus::Color(255, 180, 180, 185));
 
-	wchar_t wtitle[512];
 	wchar_t wartist[512];
-	MultiByteToWideChar(CP_UTF8, 0, title, -1, wtitle, 512);
+	wchar_t wtitle[512];
 	MultiByteToWideChar(CP_UTF8, 0, artist, -1, wartist, 512);
+	MultiByteToWideChar(CP_UTF8, 0, title, -1, wtitle, 512);
 
 	Gdiplus::StringFormat format;
 	format.SetAlignment(Gdiplus::StringAlignmentNear);
@@ -106,7 +106,7 @@ static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap, Gdiplus::Graphics *gr
 	Gdiplus::Font *artist_font = create_gdip_font(L"Segoe UI", ARTIST_FONT_SIZE,
 						      Gdiplus::FontStyleBold);
 
-	int label_y = TEXT_START_Y - 30;
+	int label_y = TEXT_START_Y - 40;
 	Gdiplus::SolidBrush label_brush(Gdiplus::Color(120, 120, 120, 130));
 	graphics->DrawString(L"NOW PLAYING", -1, label_font,
 			     Gdiplus::RectF((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)label_y,
@@ -114,17 +114,17 @@ static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap, Gdiplus::Graphics *gr
 			     &nowplaying_format, &label_brush);
 
 	if (wartist[0] != L'\0' && wcslen(wartist) > 0) {
-		Gdiplus::RectF artist_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y - 10),
+		Gdiplus::RectF artist_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y - 20),
 					   (Gdiplus::REAL)(COMPOSITE_WIDTH - TEXT_X - 20),
-					   (Gdiplus::REAL)60);
-		graphics->DrawString(wartist, -1, artist_font, artist_rect, &format, &artist_brush);
+					   (Gdiplus::REAL)100);
+		graphics->DrawString(wartist, -1, artist_font, artist_rect, &format, &white_brush);
 	}
 
 	if (wtitle[0] != L'\0' && wcslen(wtitle) > 0) {
-		Gdiplus::RectF title_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y + 40),
+		Gdiplus::RectF title_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y + 80),
 					  (Gdiplus::REAL)(COMPOSITE_WIDTH - TEXT_X - 20),
-					  (Gdiplus::REAL)150);
-		graphics->DrawString(wtitle, -1, title_font, title_rect, &format, &text_brush);
+					  (Gdiplus::REAL)100);
+		graphics->DrawString(wtitle, -1, title_font, title_rect, &format, &gray_brush);
 	}
 
 	delete label_font;
