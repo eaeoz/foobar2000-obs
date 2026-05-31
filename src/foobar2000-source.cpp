@@ -42,9 +42,9 @@ void foobar2000_module_unload(void)
 #define ART_PADDING 35
 #define TEXT_X (ART_PADDING + ART_SIZE + 20)
 #define TEXT_START_Y 130
-#define LABEL_FONT_SIZE 20
-#define TITLE_FONT_SIZE 42
-#define ARTIST_FONT_SIZE 54
+#define LABEL_FONT_SIZE 14
+#define TITLE_FONT_SIZE 30
+#define ARTIST_FONT_SIZE 38
 
 struct foobar2000_data {
 	obs_source_t *source;
@@ -106,7 +106,7 @@ static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap, Gdiplus::Graphics *gr
 	Gdiplus::Font *artist_font = create_gdip_font(L"Segoe UI", ARTIST_FONT_SIZE,
 						      Gdiplus::FontStyleBold);
 
-	int label_y = TEXT_START_Y - 40;
+	int label_y = TEXT_START_Y - 30;
 	Gdiplus::SolidBrush label_brush(Gdiplus::Color(120, 120, 120, 130));
 	graphics->DrawString(L"NOW PLAYING", -1, label_font,
 			     Gdiplus::RectF((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)label_y,
@@ -114,14 +114,14 @@ static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap, Gdiplus::Graphics *gr
 			     &nowplaying_format, &label_brush);
 
 	if (wartist[0] != L'\0' && wcslen(wartist) > 0) {
-		Gdiplus::RectF artist_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y - 15),
+		Gdiplus::RectF artist_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y - 10),
 					   (Gdiplus::REAL)(COMPOSITE_WIDTH - TEXT_X - 20),
 					   (Gdiplus::REAL)60);
 		graphics->DrawString(wartist, -1, artist_font, artist_rect, &format, &artist_brush);
 	}
 
 	if (wtitle[0] != L'\0' && wcslen(wtitle) > 0) {
-		Gdiplus::RectF title_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y + 55),
+		Gdiplus::RectF title_rect((Gdiplus::REAL)TEXT_X, (Gdiplus::REAL)(TEXT_START_Y + 40),
 					  (Gdiplus::REAL)(COMPOSITE_WIDTH - TEXT_X - 20),
 					  (Gdiplus::REAL)150);
 		graphics->DrawString(wtitle, -1, title_font, title_rect, &format, &text_brush);
