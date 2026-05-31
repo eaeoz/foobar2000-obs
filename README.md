@@ -108,7 +108,11 @@ If you are not using a Visual Studio Developer Command Prompt, run the build wit
 cmd.exe /c "`"%VCVARS%`" x64 >nul && cmake --build --preset windows-x64"
 ```
 
-(Set `%VCVARS%` to the path of `vcvarsall.bat` — e.g. `D:\VS\Product\VC\Auxiliary\Build\vcvarsall.bat`)
+For example:
+
+```cmd
+cmd.exe /c "`"D:\VS\Product\VC\Auxiliary\Build\vcvarsall.bat`" x64 >nul && D:\VS\Product\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe --build --preset windows-x64"
+```
 
 ### Build installer (NSIS)
 
