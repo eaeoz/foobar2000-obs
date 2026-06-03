@@ -16,6 +16,7 @@
 !LICENSE
 !README.md
 !script.nsi
+!sample.png
 
 # Exclude lock files
 *.lock.json
