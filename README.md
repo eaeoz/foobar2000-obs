@@ -2,6 +2,8 @@
 
 An [OBS Studio](https://obsproject.com/) plugin that displays the currently playing track from foobar2000 as an overlay source.
 
+![Sample](sample.png)
+
 ## Features
 
 - Shows artist name, track title, and album art from foobar2000
