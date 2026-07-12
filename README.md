@@ -75,13 +75,14 @@ The overlay is 750×340 px. Scale or position it as needed.
 
 ### Adding a semi-transparent background
 
-Since the overlay uses a transparent background, you can place a color source behind it for readability:
+Since the overlay renders with a transparent background, you can pair the foobar2000 source with a color source directly behind it for better readability:
 
-1. **Sources** → **+** → **Color Source**
-2. Set **Width** to `480`, **Height** to `200`, pick your color
-3. Right-click the color source → **Filters** → **Effect Filters** → **+** → **Color Correction**
-4. Set **Opacity** to `0.8`
-5. Drag the color source **below** the foobar2000 source in the Sources list
+1. Add the **foobar2000 Now Playing** source to your scene
+2. **Sources** → **+** → **Color Source**
+3. Set **Width** to `480`, **Height** to `200`, pick your color
+4. Right-click the color source → **Filters** → **Effect Filters** → **+** → **Color Correction**
+5. Set **Opacity** to `0.8`
+6. In the Sources list, drag the color source **directly below** the foobar2000 source so it sits right behind the overlay
 
 ## Development
 
