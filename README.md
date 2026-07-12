@@ -73,6 +73,16 @@ See [Development](#development) below.
 
 The overlay is 750×340 px. Scale or position it as needed.
 
+### Adding a semi-transparent background
+
+Since the overlay uses a transparent background, you can place a color source behind it for readability:
+
+1. **Sources** → **+** → **Color Source**
+2. Set **Width** to `480`, **Height** to `200`, pick your color
+3. Right-click the color source → **Filters** → **Effect Filters** → **+** → **Color Correction**
+4. Set **Opacity** to `0.8`
+5. Drag the color source **below** the foobar2000 source in the Sources list
+
 ## Development
 
 ### Prerequisites
