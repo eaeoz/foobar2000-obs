@@ -70,6 +70,9 @@ struct foobar2000_data {
 
 	int opacity;
 	int bg_opacity;
+	uint32_t label_color;
+	uint32_t artist_color;
+	uint32_t title_color;
 };
 
 static Gdiplus::Font *create_gdip_font(const wchar_t *family, float size,
@@ -87,15 +90,26 @@ static Gdiplus::Font *create_gdip_font(const wchar_t *family, float size,
 static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap,
 				  Gdiplus::Graphics *graphics,
 				  const char *artist, const char *title,
-				  const char *track_num)
+				  uint32_t label_color, uint32_t artist_color,
+				  uint32_t title_color)
 {
 	if ((!artist || artist[0] == '\0') &&
 	    (!title || title[0] == '\0')) {
 		return;
 	}
 
-	Gdiplus::SolidBrush white_brush(Gdiplus::Color(255, 255, 255, 255));
-	Gdiplus::SolidBrush gray_brush(Gdiplus::Color(255, 180, 180, 185));
+	Gdiplus::SolidBrush label_brush(
+		Gdiplus::Color(255, (BYTE)(label_color & 0xFF),
+			       (BYTE)((label_color >> 8) & 0xFF),
+			       (BYTE)((label_color >> 16) & 0xFF)));
+	Gdiplus::SolidBrush artist_brush(
+		Gdiplus::Color(255, (BYTE)(artist_color & 0xFF),
+			       (BYTE)((artist_color >> 8) & 0xFF),
+			       (BYTE)((artist_color >> 16) & 0xFF)));
+	Gdiplus::SolidBrush title_brush(
+		Gdiplus::Color(255, (BYTE)(title_color & 0xFF),
+			       (BYTE)((title_color >> 8) & 0xFF),
+			       (BYTE)((title_color >> 16) & 0xFF)));
 
 	wchar_t wartist[512];
 	wchar_t wtitle[512];
@@ -157,8 +171,6 @@ static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap,
 		((Gdiplus::REAL)COMPOSITE_HEIGHT - total_height) / 2.0f;
 
 	{
-		Gdiplus::SolidBrush label_brush(
-			Gdiplus::Color(255, 100, 180, 255));
 		graphics->DrawString(
 			L"NOW PLAYING", -1, label_font,
 			Gdiplus::RectF((Gdiplus::REAL)TEXT_X, current_y,
@@ -173,7 +185,7 @@ static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap,
 			wartist, -1, artist_font,
 			Gdiplus::RectF((Gdiplus::REAL)TEXT_X, current_y,
 				       text_width, artist_bounds.Height),
-			&format, &white_brush);
+			&format, &artist_brush);
 		current_y += artist_bounds.Height + gap;
 	}
 
@@ -182,7 +194,7 @@ static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap,
 			wtitle, -1, title_font,
 			Gdiplus::RectF((Gdiplus::REAL)TEXT_X, current_y,
 				       text_width, title_bounds.Height),
-			&format, &gray_brush);
+			&format, &title_brush);
 	}
 
 	delete label_font;
@@ -311,7 +323,8 @@ static void update_composite_bitmap(struct foobar2000_data *s)
 	}
 
 	render_text_to_bitmap(bitmap, &graphics, s->artist, s->title,
-				s->track_num);
+				s->label_color, s->artist_color,
+				s->title_color);
 
 	if (art)
 		delete art;
@@ -509,6 +522,9 @@ static void *source_create(obs_data_t *settings, obs_source_t *source)
 	s->last_bridge_path[0] = L'\0';
 	s->opacity = 100;
 	s->bg_opacity = 70;
+	s->label_color = 0xFFB464;
+	s->artist_color = 0xFFFFFF;
+	s->title_color = 0xB9B4B4;
 	return s;
 }
 
@@ -634,6 +650,10 @@ static void source_update(void *data, obs_data_t *settings)
 	auto *s = (struct foobar2000_data *)data;
 	s->opacity = (int)obs_data_get_int(settings, "opacity");
 	s->bg_opacity = (int)obs_data_get_int(settings, "bg_opacity");
+	s->label_color = (uint32_t)obs_data_get_int(settings, "label_color");
+	s->artist_color =
+		(uint32_t)obs_data_get_int(settings, "artist_color");
+	s->title_color = (uint32_t)obs_data_get_int(settings, "title_color");
 	s->texture_dirty = true;
 }
 
@@ -646,6 +666,12 @@ static obs_properties_t *source_get_properties(void *data)
 	obs_properties_add_int_slider(props, "bg_opacity",
 				   obs_module_text("Background Opacity"), 0, 100,
 				   1);
+	obs_properties_add_color(props, "label_color",
+				 obs_module_text("LabelColor"));
+	obs_properties_add_color(props, "artist_color",
+				 obs_module_text("ArtistColor"));
+	obs_properties_add_color(props, "title_color",
+				 obs_module_text("TitleColor"));
 	return props;
 }
 
@@ -653,6 +679,9 @@ static void source_defaults(obs_data_t *settings)
 {
 	obs_data_set_default_int(settings, "opacity", 100);
 	obs_data_set_default_int(settings, "bg_opacity", 70);
+	obs_data_set_default_int(settings, "label_color", 0xFFB464);
+	obs_data_set_default_int(settings, "artist_color", 0xFFFFFF);
+	obs_data_set_default_int(settings, "title_color", 0xB9B4B4);
 }
 
 extern "C" struct obs_source_info foobar2000_source_info = {
