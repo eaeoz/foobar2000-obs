@@ -171,29 +171,35 @@ static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap,
 		((Gdiplus::REAL)COMPOSITE_HEIGHT - total_height) / 2.0f;
 
 	{
+		Gdiplus::REAL pad = label_bounds.Height * 0.3f;
 		graphics->DrawString(
 			L"NOW PLAYING", -1, label_font,
 			Gdiplus::RectF((Gdiplus::REAL)TEXT_X, current_y,
-				       (Gdiplus::REAL)300, label_bounds.Height),
+				       (Gdiplus::REAL)300,
+				       label_bounds.Height + pad),
 			&nowplaying_format, &label_brush);
 	}
 
 	current_y += label_bounds.Height + gap;
 
 	if (wartist[0] != L'\0' && wcslen(wartist) > 0) {
+		Gdiplus::REAL pad = artist_bounds.Height * 0.3f;
 		graphics->DrawString(
 			wartist, -1, artist_font,
 			Gdiplus::RectF((Gdiplus::REAL)TEXT_X, current_y,
-				       text_width, artist_bounds.Height),
+				       text_width,
+				       artist_bounds.Height + pad),
 			&format, &artist_brush);
 		current_y += artist_bounds.Height + gap;
 	}
 
 	if (wtitle[0] != L'\0' && wcslen(wtitle) > 0) {
+		Gdiplus::REAL pad = title_bounds.Height * 0.3f;
 		graphics->DrawString(
 			wtitle, -1, title_font,
 			Gdiplus::RectF((Gdiplus::REAL)TEXT_X, current_y,
-				       text_width, title_bounds.Height),
+				       text_width,
+				       title_bounds.Height + pad),
 			&format, &title_brush);
 	}
 
@@ -345,15 +351,14 @@ static BOOL CALLBACK fb2k_enum_windows(HWND hwnd, LPARAM lparam)
 	wchar_t class_name[256];
 	GetClassNameW(hwnd, class_name, 256);
 	if (wcsstr(class_name, L"{E7076D1C") ||
-	    wcsstr(class_name, L"foobar") ||
-	    wcsstr(class_name, L"Default")) {
+	    wcsstr(class_name, L"foobar2000")) {
 		info->hwnd = hwnd;
 		return FALSE;
 	}
 
 	wchar_t title[1024];
 	GetWindowTextW(hwnd, title, 1024);
-	if (wcsstr(title, L"foobar2000") && !wcsstr(title, L"-obs")) {
+	if (wcsstr(title, L" [foobar2000")) {
 		info->hwnd = hwnd;
 		return FALSE;
 	}
@@ -657,6 +662,25 @@ static void source_update(void *data, obs_data_t *settings)
 	s->texture_dirty = true;
 }
 
+static bool reset_defaults_clicked(obs_properties_t *props,
+				   obs_property_t *property,
+				   void *data)
+{
+	UNUSED_PARAMETER(props);
+	UNUSED_PARAMETER(property);
+	auto *s = (struct foobar2000_data *)data;
+	obs_source_t *source = s->source;
+	obs_data_t *settings = obs_source_get_settings(source);
+	obs_data_set_int(settings, "opacity", 100);
+	obs_data_set_int(settings, "bg_opacity", 70);
+	obs_data_set_int(settings, "label_color", 0xFFB464);
+	obs_data_set_int(settings, "artist_color", 0xFFFFFF);
+	obs_data_set_int(settings, "title_color", 0xB9B4B4);
+	obs_source_update(source, settings);
+	obs_data_release(settings);
+	return true;
+}
+
 static obs_properties_t *source_get_properties(void *data)
 {
 	UNUSED_PARAMETER(data);
@@ -672,6 +696,9 @@ static obs_properties_t *source_get_properties(void *data)
 				 obs_module_text("ArtistColor"));
 	obs_properties_add_color(props, "title_color",
 				 obs_module_text("TitleColor"));
+	obs_properties_add_button(props, "reset_defaults",
+				  obs_module_text("ResetDefaults"),
+				  reset_defaults_clicked);
 	return props;
 }
 
