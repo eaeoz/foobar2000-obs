@@ -291,7 +291,7 @@ static void update_composite_bitmap(struct foobar2000_data *s)
 	graphics.SetInterpolationMode(
 		Gdiplus::InterpolationModeHighQualityBicubic);
 
-	graphics.Clear(Gdiplus::Color(0, 0, 0, 0));
+	graphics.Clear(Gdiplus::Color(179, 0, 0, 0));
 
 	Gdiplus::Bitmap *art = NULL;
 
@@ -412,6 +412,46 @@ static void poll_foobar2000(struct foobar2000_data *s)
 			strncpy_s(s->title, 512, text_utf8, _TRUNCATE);
 			if (strncmp(s->title, "foobar2000", 10) == 0)
 				s->title[0] = '\0';
+		}
+	}
+
+	// Extract clean title from bridge path filename instead of window text
+	if (s->last_bridge_path_valid) {
+		const wchar_t *fname = wcsrchr(s->last_bridge_path, L'\\');
+		if (fname) {
+			fname++;
+		} else {
+			fname = s->last_bridge_path;
+		}
+
+		// Convert filename to UTF-8 and strip extension
+		char fname_utf8[512];
+		WideCharToMultiByte(CP_UTF8, 0, fname, -1, fname_utf8, 512,
+				    NULL, NULL);
+
+		char *dot = strrchr(fname_utf8, '.');
+		if (dot)
+			*dot = '\0';
+
+		// Strip artist prefix if present ("Artist - Title")
+		char *title_dash = strstr(fname_utf8, " - ");
+		if (title_dash && s->artist[0] != '\0') {
+			// Check if the part before " - " matches the artist
+			size_t artist_len = strlen(s->artist);
+			if (artist_len > 0 &&
+			   strncmp(fname_utf8, s->artist,
+				    artist_len) == 0) {
+				strncpy_s(s->title, 512, title_dash + 3,
+					  _TRUNCATE);
+			} else {
+				strncpy_s(s->title, 512, fname_utf8,
+					  _TRUNCATE);
+			}
+		} else if (title_dash) {
+			// No artist from window, use full filename
+			strncpy_s(s->title, 512, fname_utf8, _TRUNCATE);
+		} else {
+			strncpy_s(s->title, 512, fname_utf8, _TRUNCATE);
 		}
 	}
 
