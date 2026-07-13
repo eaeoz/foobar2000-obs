@@ -6,11 +6,11 @@ OutFile "foobar2000-obs-installer.exe"
 RequestExecutionLevel user
 BrandingText "foobar2000-obs by Sedat ERGOZ"
 
-VIProductVersion "1.0.0.0"
+VIProductVersion "2.0.0.0"
 VIAddVersionKey "ProductName" "foobar2000-obs"
 VIAddVersionKey "CompanyName" "Sedat ERGOZ"
 VIAddVersionKey "FileDescription" "foobar2000-obs - OBS plugin by Sedat ERGOZ"
-VIAddVersionKey "ProductVersion" "1.0.0"
+VIAddVersionKey "ProductVersion" "2.0.0"
 VIAddVersionKey "Comments" "foobar2000-obs by Sedat ERGOZ - sedatergoz@gmail.com"
 
 Var OBSPath
