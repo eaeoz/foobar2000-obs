@@ -67,6 +67,8 @@ struct foobar2000_data {
 
 	wchar_t last_bridge_path[MAX_PATH];
 	bool last_bridge_path_valid;
+
+	int opacity;
 };
 
 static Gdiplus::Font *create_gdip_font(const wchar_t *family, float size,
@@ -503,6 +505,7 @@ static void *source_create(obs_data_t *settings, obs_source_t *source)
 	s->title[0] = '\0';
 	s->last_bridge_path_valid = false;
 	s->last_bridge_path[0] = L'\0';
+	s->opacity = 100;
 	return s;
 }
 
@@ -579,6 +582,17 @@ static void create_texture_from_bitmap(struct foobar2000_data *s)
 	delete s->pending_bitmap;
 	s->pending_bitmap = NULL;
 
+	if (s->opacity < 100) {
+		float alpha_scale = s->opacity / 100.0f;
+		uint32_t *pixels = (uint32_t *)data;
+		int total = COMPOSITE_WIDTH * COMPOSITE_HEIGHT;
+		for (int i = 0; i < total; i++) {
+			uint32_t px = pixels[i];
+			uint8_t a = (uint8_t)((px >> 24) * alpha_scale);
+			pixels[i] = (px & 0x00FFFFFF) | ((uint32_t)a << 24);
+		}
+	}
+
 	gs_texture_t *tex = gs_texture_create(COMPOSITE_WIDTH, COMPOSITE_HEIGHT,
 					      GS_BGRA, 1,
 					      (const uint8_t **)&data, 0);
@@ -614,20 +628,23 @@ static void source_video_render(void *data, gs_effect_t *effect)
 
 static void source_update(void *data, obs_data_t *settings)
 {
-	UNUSED_PARAMETER(data);
-	UNUSED_PARAMETER(settings);
+	auto *s = (struct foobar2000_data *)data;
+	s->opacity = (int)obs_data_get_int(settings, "opacity");
+	s->texture_dirty = true;
 }
 
 static obs_properties_t *source_get_properties(void *data)
 {
 	UNUSED_PARAMETER(data);
 	obs_properties_t *props = obs_properties_create();
+	obs_properties_add_int_slider(props, "opacity",
+				   obs_module_text("Opacity"), 0, 100, 1);
 	return props;
 }
 
 static void source_defaults(obs_data_t *settings)
 {
-	UNUSED_PARAMETER(settings);
+	obs_data_set_default_int(settings, "opacity", 100);
 }
 
 extern "C" struct obs_source_info foobar2000_source_info = {
