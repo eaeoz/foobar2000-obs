@@ -69,6 +69,7 @@ struct foobar2000_data {
 	bool last_bridge_path_valid;
 
 	int opacity;
+	int bg_opacity;
 };
 
 static Gdiplus::Font *create_gdip_font(const wchar_t *family, float size,
@@ -295,7 +296,8 @@ static void update_composite_bitmap(struct foobar2000_data *s)
 	graphics.SetInterpolationMode(
 		Gdiplus::InterpolationModeHighQualityBicubic);
 
-	graphics.Clear(Gdiplus::Color(179, 0, 0, 0));
+	uint8_t bg_alpha = (uint8_t)(s->bg_opacity * 255 / 100);
+	graphics.Clear(Gdiplus::Color(bg_alpha, 0, 0, 0));
 
 	Gdiplus::Bitmap *art = NULL;
 
@@ -506,6 +508,7 @@ static void *source_create(obs_data_t *settings, obs_source_t *source)
 	s->last_bridge_path_valid = false;
 	s->last_bridge_path[0] = L'\0';
 	s->opacity = 100;
+	s->bg_opacity = 70;
 	return s;
 }
 
@@ -630,6 +633,7 @@ static void source_update(void *data, obs_data_t *settings)
 {
 	auto *s = (struct foobar2000_data *)data;
 	s->opacity = (int)obs_data_get_int(settings, "opacity");
+	s->bg_opacity = (int)obs_data_get_int(settings, "bg_opacity");
 	s->texture_dirty = true;
 }
 
@@ -639,12 +643,16 @@ static obs_properties_t *source_get_properties(void *data)
 	obs_properties_t *props = obs_properties_create();
 	obs_properties_add_int_slider(props, "opacity",
 				   obs_module_text("Opacity"), 0, 100, 1);
+	obs_properties_add_int_slider(props, "bg_opacity",
+				   obs_module_text("Background Opacity"), 0, 100,
+				   1);
 	return props;
 }
 
 static void source_defaults(obs_data_t *settings)
 {
 	obs_data_set_default_int(settings, "opacity", 100);
+	obs_data_set_default_int(settings, "bg_opacity", 70);
 }
 
 extern "C" struct obs_source_info foobar2000_source_info = {
