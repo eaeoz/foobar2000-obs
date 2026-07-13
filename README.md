@@ -2,7 +2,7 @@
 
 An [OBS Studio](https://obsproject.com/) plugin that shows what's currently playing in foobar2000 as an overlay.
 
-![Sample](sample.png)
+![Sample](sample2.png)
 
 ## What it does
 
