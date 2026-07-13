@@ -46,14 +46,14 @@ The ZIP contains two components:
 
 ```
 # OBS Plugin
-foobar2000-obs.dll
-foobar2000-obs.pdb
+foobar2000-obs.dll          # Main plugin DLL loaded by OBS Studio
+foobar2000-obs.pdb          # Debug symbols (for crash reports / debugging)
 foobar2000-obs/
   locale/
-    en-US.ini
+    en-US.ini               # UI strings (source name, setting labels)
 
 # foobar2000 Bridge Component
-foo_obsbridge.dll
+foo_obsbridge.dll           # foobar2000 component that passes file path to OBS
 ```
 
 **OBS plugin:**
@@ -95,7 +95,7 @@ The overlay is 750x300 px. Scale or position as needed.
 - CMake 3.28+ (bundled with Visual Studio)
 - Git
 
-### Main Output Targeted Files
+### Main Output Files
 
 - OBS plugin: `build_x64/RelWithDebInfo/foobar2000-obs.dll`
 - Bridge component for foobar2000: `build_x64/out/foo_obsbridge.dll`
