@@ -38,11 +38,11 @@ void foobar2000_module_unload(void)
 
 #define POLL_INTERVAL_NS 1000000000ULL
 #define COMPOSITE_WIDTH 750
-#define COMPOSITE_HEIGHT 400
-#define ART_SIZE 250
-#define ART_PADDING 35
+#define COMPOSITE_HEIGHT 300
+#define ART_SIZE 200
+#define ART_PADDING 25
 #define TEXT_X (ART_PADDING + ART_SIZE + 20)
-#define LABEL_FONT_SIZE 11
+#define LABEL_FONT_SIZE 22
 #define TITLE_FONT_SIZE 30
 #define ARTIST_FONT_SIZE 36
 
@@ -59,6 +59,7 @@ struct foobar2000_data {
 
 	char artist[512];
 	char title[512];
+	char track_num[32];
 
 	Gdiplus::Bitmap *pending_bitmap;
 
@@ -82,7 +83,8 @@ static Gdiplus::Font *create_gdip_font(const wchar_t *family, float size,
 
 static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap,
 				  Gdiplus::Graphics *graphics,
-				  const char *artist, const char *title)
+				  const char *artist, const char *title,
+				  const char *track_num)
 {
 	if ((!artist || artist[0] == '\0') &&
 	    (!title || title[0] == '\0')) {
@@ -153,11 +155,11 @@ static void render_text_to_bitmap(Gdiplus::Bitmap *bitmap,
 
 	{
 		Gdiplus::SolidBrush label_brush(
-			Gdiplus::Color(120, 120, 120, 130));
+			Gdiplus::Color(255, 100, 180, 255));
 		graphics->DrawString(
 			L"NOW PLAYING", -1, label_font,
 			Gdiplus::RectF((Gdiplus::REAL)TEXT_X, current_y,
-				       (Gdiplus::REAL)200, label_bounds.Height),
+				       (Gdiplus::REAL)300, label_bounds.Height),
 			&nowplaying_format, &label_brush);
 	}
 
@@ -304,7 +306,8 @@ static void update_composite_bitmap(struct foobar2000_data *s)
 		}
 	}
 
-	render_text_to_bitmap(bitmap, &graphics, s->artist, s->title);
+	render_text_to_bitmap(bitmap, &graphics, s->artist, s->title,
+				s->track_num);
 
 	if (art)
 		delete art;
@@ -368,8 +371,9 @@ static void poll_foobar2000(struct foobar2000_data *s)
 
 	if (!hwnd) {
 		if (s->artist[0] != '\0' || s->title[0] != '\0') {
-			s->artist[0] = '\0';
-			s->title[0] = '\0';
+	s->artist[0] = '\0';
+	s->title[0] = '\0';
+	s->track_num[0] = '\0';
 			update_composite_bitmap(s);
 		}
 		return;
@@ -452,6 +456,27 @@ static void poll_foobar2000(struct foobar2000_data *s)
 			strncpy_s(s->title, 512, fname_utf8, _TRUNCATE);
 		} else {
 			strncpy_s(s->title, 512, fname_utf8, _TRUNCATE);
+		}
+
+		// Extract and strip leading track number (e.g., "01. " "1 - " "01 - ")
+		char *t = s->title;
+		char *num_start = t;
+		while (*t >= '0' && *t <= '9')
+			t++;
+		if (t > num_start && (*t == '.' || *t == '-' || *t == ' ')) {
+			size_t num_len = (size_t)(t - num_start);
+			if (num_len < sizeof(s->track_num)) {
+				memcpy(s->track_num, num_start, num_len);
+				s->track_num[num_len] = '\0';
+			}
+			t++;
+			while (*t == ' ' || *t == '-' || *t == '.')
+				t++;
+			if (*t != '\0') {
+				memmove(s->title, t, strlen(t) + 1);
+			}
+		} else {
+			s->track_num[0] = '\0';
 		}
 	}
 
