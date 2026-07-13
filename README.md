@@ -38,6 +38,8 @@ The overlay is rendered with GDI+ into a 750x300 pixel bitmap, converted to an O
 
 Run the installer. It automatically detects both OBS Studio and foobar2000 directories and copies all files to the correct locations:
 
+> **Note:** The installer auto-detects your OBS Studio and foobar2000 installation paths. You do not need to change them unless you are installing to a custom or portable location for future use.
+
 | File | Destination |
 |------|-------------|
 | `foobar2000-obs.dll` | `{OBS}\obs-plugins\64bit\` |
