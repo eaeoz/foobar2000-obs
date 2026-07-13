@@ -72,6 +72,16 @@ obs_done:
     ; --- Detect foobar2000 ---
     StrCpy $FB2KPath ""
 
+    ; Try foobar2000 v2 registry key (HKLM Software\foobar2000 InstallDir)
+    ReadRegStr $FB2KPath HKLM \
+    "Software\foobar2000" "InstallDir"
+    IfFileExists "$FB2KPath\foobar2000.exe" fb2k_done
+
+    ReadRegStr $FB2KPath HKCU \
+    "Software\foobar2000" "InstallDir"
+    IfFileExists "$FB2KPath\foobar2000.exe" fb2k_done
+
+    ; Try foil key (older v1 installs)
     ReadRegStr $FB2KPath HKCU \
     "Software\foobar2000\foil" ""
     IfFileExists "$FB2KPath\foobar2000.exe" fb2k_done
@@ -80,6 +90,23 @@ obs_done:
     "Software\foobar2000\foil" ""
     IfFileExists "$FB2KPath\foobar2000.exe" fb2k_done
 
+    ; Try uninstall registry keys
+    ReadRegStr $FB2KPath HKLM \
+    "Software\Microsoft\Windows\CurrentVersion\Uninstall\foobar2000 (x64)" \
+    "InstallLocation"
+    IfFileExists "$FB2KPath\foobar2000.exe" fb2k_done
+
+    ReadRegStr $FB2KPath HKCU \
+    "Software\Microsoft\Windows\CurrentVersion\Uninstall\foobar2000 (x64)" \
+    "InstallLocation"
+    IfFileExists "$FB2KPath\foobar2000.exe" fb2k_done
+
+    ReadRegStr $FB2KPath HKLM \
+    "Software\Microsoft\Windows\CurrentVersion\Uninstall\foobar2000" \
+    "InstallLocation"
+    IfFileExists "$FB2KPath\foobar2000.exe" fb2k_done
+
+    ; Try common paths
     StrCpy $FB2KPath "$LOCALAPPDATA\foobar2000-v2"
     IfFileExists "$FB2KPath\foobar2000.exe" fb2k_done
 
@@ -92,8 +119,8 @@ obs_done:
     StrCpy $FB2KPath "$PROGRAMFILES\foobar2000"
     IfFileExists "$FB2KPath\foobar2000.exe" fb2k_done
 
-    ; Not found - leave empty, user browses
-    StrCpy $FB2KPath "$LOCALAPPDATA\foobar2000-v2"
+    ; Not found - leave empty for user to browse
+    StrCpy $FB2KPath ""
 
 fb2k_done:
 
@@ -109,6 +136,9 @@ FunctionEnd
 ; --- Page 2: foobar2000 custom browse ---
 Function fb2k_page_show
 
+    StrCmp $FB2KPath "" 0 fb2k_has_path
+    StrCpy $FB2KPath "$PROGRAMFILES64\foobar2000"
+fb2k_has_path:
     StrCpy $FB2KDirText "$FB2KPath"
 
     nsDialogs::Create 1018
