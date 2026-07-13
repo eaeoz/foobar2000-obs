@@ -421,12 +421,13 @@ static void poll_foobar2000(struct foobar2000_data *s)
 
 	// Extract clean title from bridge path filename instead of window text
 	if (s->last_bridge_path_valid) {
-		const wchar_t *fname = wcsrchr(s->last_bridge_path, L'\\');
-		if (fname) {
-			fname++;
-		} else {
-			fname = s->last_bridge_path;
-		}
+		const wchar_t *fname_slash = wcsrchr(s->last_bridge_path, L'/');
+		const wchar_t *fname_back = wcsrchr(s->last_bridge_path, L'\\');
+		const wchar_t *fname =
+			(fname_slash && (!fname_back || fname_slash > fname_back))
+				? fname_slash + 1
+				: (fname_back ? fname_back + 1
+					      : s->last_bridge_path);
 
 		// Convert filename to UTF-8 and strip extension
 		char fname_utf8[512];
@@ -437,23 +438,15 @@ static void poll_foobar2000(struct foobar2000_data *s)
 		if (dot)
 			*dot = '\0';
 
-		// Strip artist prefix if present ("Artist - Title")
-		char *title_dash = strstr(fname_utf8, " - ");
-		if (title_dash && s->artist[0] != '\0') {
-			// Check if the part before " - " matches the artist
-			size_t artist_len = strlen(s->artist);
-			if (artist_len > 0 &&
-			   strncmp(fname_utf8, s->artist,
-				    artist_len) == 0) {
-				strncpy_s(s->title, 512, title_dash + 3,
-					  _TRUNCATE);
-			} else {
-				strncpy_s(s->title, 512, fname_utf8,
-					  _TRUNCATE);
-			}
-		} else if (title_dash) {
-			// No artist from window, use full filename
-			strncpy_s(s->title, 512, fname_utf8, _TRUNCATE);
+		// Strip artist prefix: take everything after last " - "
+		char *title_dash = NULL;
+		char *scan = fname_utf8;
+		while ((scan = strstr(scan, " - ")) != NULL) {
+			title_dash = scan;
+			scan += 3;
+		}
+		if (title_dash) {
+			strncpy_s(s->title, 512, title_dash + 3, _TRUNCATE);
 		} else {
 			strncpy_s(s->title, 512, fname_utf8, _TRUNCATE);
 		}
