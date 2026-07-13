@@ -7,102 +7,102 @@ An [OBS Studio](https://obsproject.com/) plugin that displays the currently play
 ## Features
 
 - Shows artist name, track title, and album art from foobar2000
-- Reads track info directly from the foobar2000 window title — no additional components or IPC needed
-- Two album art sources:
-  - **foobar2000 album-art cache** (`%APPDATA%\foobar2000[-v2]\album-art\`)
-  - **Embedded art** extracted from audio files via Windows `IShellItemImageFactory`
-- Automatically searches for audio files in your music directories when cache is unavailable
+- Album art extracted from audio files via Windows Shell API
+- Built-in background and overall opacity controls
+- Customizable text colors for label, artist, and title
 - Transparent background — blends over any scene
 - Clears the display when playback stops or foobar2000 is closed
 
 ## How it works
 
-Every second, the plugin polls the foobar2000 window title via `EnumWindows` / `GetWindowText`. The window title format is `Artist - Title [foobar2000]`, which it parses to extract artist and track name.
+The plugin consists of two parts:
 
-Album art is resolved by checking foobar2000's album-art cache first, then falling back to embedded art extracted from matching audio files found in known music directories.
+1. **OBS plugin** (`foobar2000-obs.dll`) — reads track info from the foobar2000 window title and album art from the current file
+2. **foobar2000 component** (`foo_obsbridge.dll`) — writes the current playing file path to a bridge file at `%LOCALAPPDATA%\foobar2000-obs\bridge.txt`
 
-The overlay is rendered with GDI+ into a 750×340 pixel bitmap, converted to an OBS texture, and drawn as a sprite.
+Every second, the plugin reads the foobar2000 window title via `EnumWindows` to get artist and track name, then reads the bridge file to get the file path for album art extraction.
+
+The overlay is rendered with GDI+ into a 750x300 pixel bitmap, converted to an OBS texture, and drawn as a sprite.
 
 ## Requirements
 
-- **OBS Studio** ≥ 31.1.1
-- **foobar2000** running on the same machine
+- **OBS Studio** >= 31.1.1
+- **foobar2000** v2.x running on the same machine
 - **Windows** 10 or later (x64)
 
 ## Installation
 
-Download the [latest release](https://github.com/eaeoz/foobar2000-obs/releases/latest) and choose one of the methods below.
-
 ### Option 1 — EXE Installer (recommended)
 
-[Download `foobar2000-obs-installer.exe`](https://github.com/eaeoz/foobar2000-obs/releases/download/1.0.0/foobar2000-obs-installer.exe)
+[Download `foobar2000-obs-installer.exe`](https://github.com/eaeoz/foobar2000-obs/releases/download/2.0.0/foobar2000-obs-installer.exe)
 
-Run the installer — it automatically detects your OBS Studio directory and copies all files to the correct locations. No manual steps required.
+Run the installer. It automatically detects both OBS Studio and foobar2000 directories and copies all files to the correct locations:
 
-### Option 2 — Manual ZIP (for portable / multi-machine setups)
+| File | Destination |
+|------|-------------|
+| `foobar2000-obs.dll` | `{OBS}\obs-plugins\64bit\` |
+| `foobar2000-obs.pdb` | `{OBS}\obs-plugins\64bit\` |
+| `locale\en-US.ini` | `{OBS}\data\obs-plugins\foobar2000-obs\locale\` |
+| `foo_obsbridge.dll` | `{foobar2000}\components\` |
 
-[Download `foobar2000-obs.zip`](https://github.com/eaeoz/foobar2000-obs/releases/download/1.0.0/foobar2000-obs.zip)
+### Option 2 — Manual ZIP
 
-The ZIP contains these files:
+[Download `foobar2000-obs.zip`](https://github.com/eaeoz/foobar2000-obs/releases/download/2.0.0/foobar2000-obs.zip)
+
+The ZIP contains two components:
 
 ```
-foobar2000-obs.dll        # Plugin binary
-foobar2000-obs.pdb        # Debug symbols (optional)
+# OBS Plugin
+foobar2000-obs.dll
+foobar2000-obs.pdb
 foobar2000-obs/
-└── locale/
-    └── en-US.ini          # Localization file
+  locale/
+    en-US.ini
+
+# foobar2000 Bridge Component
+foo_obsbridge.dll
 ```
 
-1. Extract the ZIP
-2. Copy `foobar2000-obs.dll` and `foobar2000-obs.pdb` to  
-   `{OBS_DIR}\obs-plugins\64bit\`
-3. Copy the entire `foobar2000-obs` folder to  
-   `{OBS_DIR}\data\obs-plugins\`  
+**Install the OBS plugin:**
+
+1. Copy `foobar2000-obs.dll` and `foobar2000-obs.pdb` to `{OBS_DIR}\obs-plugins\64bit\`
+2. Copy the `foobar2000-obs` folder to `{OBS_DIR}\data\obs-plugins\`  
    (result: `{OBS_DIR}\data\obs-plugins\foobar2000-obs\locale\en-US.ini`)
-4. Restart OBS Studio
+3. Restart OBS Studio
 
-### Build from source
+**Install the foobar2000 bridge component:**
 
-See [Development](#development) below.
+1. Copy `foo_obsbridge.dll` to your foobar2000 `components` folder  
+   (default: `C:\Users\{you}\AppData\Roaming\foobar2000\components\`)
+2. Restart foobar2000
 
-## Usage in OBS
+## Usage
 
-1. Add a new **Source** → **foobar2000 Now Playing** to your scene
-2. (Optional) Set a custom **Music Directory** in the source properties to help locate audio files for embedded album art extraction
-3. Make sure foobar2000 is running and playing a track
+1. Make sure both OBS Studio and foobar2000 are running
+2. In OBS, add a new **Source** -> **foobar2000 Now Playing** to your scene
+3. Start playback in foobar2000 — the overlay updates automatically
 
-The overlay is 750×340 px. Scale or position it as needed.
+### Source Settings
 
-### Adding a semi-transparent background
+| Setting | Description |
+|---------|-------------|
+| **Opacity** | Overall transparency (0-100%) |
+| **Background Opacity** | Background darkness (0-100%, default 70%) |
+| **Label Color** | Color of the "NOW PLAYING" text |
+| **Artist Color** | Color of the artist name |
+| **Title Color** | Color of the track title |
+| **Reset Defaults** | Restores all settings to defaults |
 
-Since the overlay renders with a transparent background, you can pair the foobar2000 source with a color source directly behind it for better readability:
-
-1. Add the **foobar2000 Now Playing** source to your scene
-2. **Sources** → **+** → **Color Source**
-3. Set **Width** to `480`, **Height** to `200`, pick your color
-4. Right-click the color source → **Filters** → **Effect Filters** → **+** → **Color Correction**
-5. Set **Opacity** to `0.8`
-6. In the Sources list, drag the color source **directly below** the foobar2000 source so it sits right behind the overlay
+The overlay is 750x300 px. Scale or position it as needed in your scene.
 
 ## Development
 
 ### Prerequisites
 
-- **Visual Studio 2022** (or later) with **Desktop development with C++** workload
-- **CMake** ≥ 3.28 (bundled with Visual Studio)
+- **Visual Studio 2022** or later with **Desktop development with C++** workload
+- **CMake** >= 3.28 (bundled with Visual Studio)
+- **foobar2000 SDK** (fetched automatically by CMake)
 - **Git**
-- OBS Studio installed (for runtime testing)
-
-### Clone
-
-```powershell
-git clone https://github.com/yourusername/foobar2000-obs
-cd foobar2000-obs
-```
-
-### Setup dependencies
-
-The build system fetches prebuilt OBS SDK and dependencies automatically. Check `.deps/` after the first configure step.
 
 ### Build
 
@@ -111,75 +111,18 @@ cmake --preset windows-x64
 cmake --build --preset windows-x64
 ```
 
-- Output: `build_x64/RelWithDebInfo/foobar2000-obs.dll`
-- Build type: `RelWithDebInfo` (optimized with debug symbols)
-- Alternative: `cmake --build build_x64 --config Debug`
+This builds both the OBS plugin and the foobar2000 bridge component.
 
-If you are not using a Visual Studio Developer Command Prompt, run the build with full VC environment setup:
+- OBS plugin: `build_x64/RelWithDebInfo/foobar2000-obs.dll`
+- Bridge component: `build_x64/out/foo_obsbridge.dll`
 
-```cmd
-cmd.exe /c "`"%VCVARS%`" x64 >nul && cmake --build --preset windows-x64"
-```
-
-For example:
-
-```cmd
-cmd.exe /c "`"D:\VS\Product\VC\Auxiliary\Build\vcvarsall.bat`" x64 >nul && D:\VS\Product\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe --build --preset windows-x64"
-```
-
-### Build installer (NSIS)
+### Build installer
 
 ```powershell
-makensis script.nsi
+.\build-all.bat
 ```
 
-The NSIS script `script.nsi` creates `foobar2000-obs-installer.exe` which installs:
-
-| File | Destination |
-|------|-------------|
-| `foobar2000-obs.dll` | `{OBS}\obs-plugins\64bit\` |
-| `foobar2000-obs.pdb` | `{OBS}\obs-plugins\64bit\` |
-| `locale\en-US.ini` | `{OBS}\data\obs-plugins\foobar2000-obs\locale\` |
-
-The installer auto-detects the OBS Studio directory from the registry.
-
-### Install to OBS
-
-```powershell
-.\install-plugin.ps1                        # auto-detect OBS dir
-.\install-plugin.ps1 -ObsDir "C:\Program Files\obs-studio"
-```
-
-### Formatting
-
-```powershell
-build-aux\run-clang-format                   # C/C++ (uses clang-format-19)
-build-aux\run-clang-format --check           # check-only
-build-aux\run-gersemi                        # CMake (uses gersemi >= 0.12.0)
-```
-
-### Project structure
-
-| Path | Purpose |
-|------|---------|
-| `src/foobar2000-source.cpp` | Main source implementation (C++, GDI+) |
-| `src/plugin-main.c` | OBS module entrypoint |
-| `src/plugin-support.c.in` | CMake-configured support template |
-| `data/locale/en-US.ini` | Localizable strings |
-| `CMakeLists.txt` | Build definition |
-| `CMakePresets.json` | Build presets (Windows, macOS, Linux) |
-| `buildspec.json` | Plugin metadata and dependency versions |
-| `install-plugin.ps1` | OBS installation helper |
-| `script.nsi` | NSIS installer script (builds `foobar2000-obs-installer.exe`) |
-| `.deps/` | Prebuilt OBS SDK (not in git) |
-
-### Platform support
-
-| Platform | Generator | Build dir |
-|----------|-----------|-----------|
-| Windows | Visual Studio 18 2026 | `build_x64` |
-| macOS | Xcode 16.0 | `build_macos` |
-| Ubuntu | Ninja | `build_x86_64` |
+This builds both components and creates `foobar2000-obs-installer.exe` using NSIS.
 
 ## License
 
