@@ -144,13 +144,13 @@ fb2k_has_path:
     nsDialogs::Create 1018
     Pop $0
 
-    ${NSD_CreateLabel} 0 0 100% 20u "foobar2000 installation folder:"
+    ${NSD_CreateLabel} 0u 0u 100% 20u "foobar2000 installation folder:"
     Pop $0
 
-    ${NSD_CreateDirRequest} 0 20u 80% 12u "$FB2KPath"
+    ${NSD_CreateDirRequest} 0u 20u 194u 12u "$FB2KPath"
     Pop $FB2KDirHWND
 
-    ${NSD_CreateBrowseButton} 82u 20u 18% 12u "Browse..."
+    ${NSD_CreateBrowseButton} 197u 20u 62u 13u "Browse"
     Pop $0
     ${NSD_OnClick} $0 fb2k_browse_click
 
@@ -161,7 +161,11 @@ FunctionEnd
 Function fb2k_browse_click
     nsDialogs::SelectFolderDialog "Select foobar2000 installation folder" "$FB2KPath"
     Pop $FB2KPath
-    StrCmp $FB2KPath "" 0 fb2k_browse_done
+    StrCmp $FB2KPath "" 0 fb2k_browse_check_error
+    StrCpy $FB2KPath "$FB2KDirText"
+    Goto fb2k_browse_done
+fb2k_browse_check_error:
+    StrCmp $FB2KPath "error" 0 fb2k_browse_done
     StrCpy $FB2KPath "$FB2KDirText"
 fb2k_browse_done:
     ${NSD_SetText} $FB2KDirHWND "$FB2KPath"
