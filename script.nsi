@@ -1,9 +1,9 @@
 !include "MUI2.nsh"
+!include "nsDialogs.nsh"
 
 Name "foobar2000-obs by Sedat ERGOZ"
 OutFile "foobar2000-obs-installer.exe"
-InstallDir "$PROGRAMFILES64\obs-studio"
-RequestExecutionLevel admin
+RequestExecutionLevel user
 BrandingText "foobar2000-obs by Sedat ERGOZ"
 
 VIProductVersion "1.0.0.0"
@@ -15,8 +15,12 @@ VIAddVersionKey "Comments" "foobar2000-obs by Sedat ERGOZ - sedatergoz@gmail.com
 
 Var OBSPath
 Var FB2KPath
+Var FB2KDirHWND
+Var FB2KDirText
 
+!define MUI_PAGE_CUSTOMFUNCTION_LEAVE obs_page_leave
 !insertmacro MUI_PAGE_DIRECTORY
+Page custom fb2k_page_show fb2k_page_leave
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "English"
 
@@ -25,52 +29,49 @@ Function .onInit
     SetRegView 64
 
     ; --- Detect OBS Studio ---
-    ; Try InstallLocation from registry
+    StrCpy $OBSPath ""
+
     ReadRegStr $OBSPath HKLM \
     "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\OBS Studio" \
     "InstallLocation"
-    IfFileExists "$OBSPath\bin\64bit\obs64.exe" obs_found
+    IfFileExists "$OBSPath\bin\64bit\obs64.exe" obs_done
 
-    ; Try DisplayIcon (full path to obs64.exe)
     ReadRegStr $0 HKLM \
     "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\OBS Studio" \
     "DisplayIcon"
     StrCpy $1 $0 20 -20
     StrCmp $1 "\bin\64bit\obs64.exe" 0 obs_try_wow
     StrCpy $OBSPath $0 -20
-    IfFileExists "$OBSPath\bin\64bit\obs64.exe" obs_found
+    IfFileExists "$OBSPath\bin\64bit\obs64.exe" obs_done
 
 obs_try_wow:
-    ; Try WOW6432Node InstallLocation
     ReadRegStr $OBSPath HKLM \
     "SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\OBS Studio" \
     "InstallLocation"
-    IfFileExists "$OBSPath\bin\64bit\obs64.exe" obs_found
+    IfFileExists "$OBSPath\bin\64bit\obs64.exe" obs_done
 
-    ; Try WOW6432Node DisplayIcon
     ReadRegStr $0 HKLM \
     "SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\OBS Studio" \
     "DisplayIcon"
     StrCpy $1 $0 20 -20
     StrCmp $1 "\bin\64bit\obs64.exe" 0 obs_try_pf64
     StrCpy $OBSPath $0 -20
-    IfFileExists "$OBSPath\bin\64bit\obs64.exe" obs_found
+    IfFileExists "$OBSPath\bin\64bit\obs64.exe" obs_done
 
 obs_try_pf64:
     StrCpy $OBSPath "$PROGRAMFILES64\obs-studio"
-    IfFileExists "$OBSPath\bin\64bit\obs64.exe" obs_found
+    IfFileExists "$OBSPath\bin\64bit\obs64.exe" obs_done
 
     StrCpy $OBSPath "$PROGRAMFILES\obs-studio"
-    IfFileExists "$OBSPath\bin\64bit\obs64.exe" obs_found
+    IfFileExists "$OBSPath\bin\64bit\obs64.exe" obs_done
 
-    Goto obs_done
-
-obs_found:
-    StrCpy $INSTDIR "$OBSPath"
+    StrCpy $OBSPath "$PROGRAMFILES64\obs-studio"
 
 obs_done:
 
-    ; --- Detect foobar2000 v2 ---
+    ; --- Detect foobar2000 ---
+    StrCpy $FB2KPath ""
+
     ReadRegStr $FB2KPath HKCU \
     "Software\foobar2000\foil" ""
     IfFileExists "$FB2KPath\foobar2000.exe" fb2k_done
@@ -79,7 +80,6 @@ obs_done:
     "Software\foobar2000\foil" ""
     IfFileExists "$FB2KPath\foobar2000.exe" fb2k_done
 
-    ; Try common paths
     StrCpy $FB2KPath "$LOCALAPPDATA\foobar2000-v2"
     IfFileExists "$FB2KPath\foobar2000.exe" fb2k_done
 
@@ -92,25 +92,68 @@ obs_done:
     StrCpy $FB2KPath "$PROGRAMFILES\foobar2000"
     IfFileExists "$FB2KPath\foobar2000.exe" fb2k_done
 
+    ; Not found - leave empty, user browses
+    StrCpy $FB2KPath "$LOCALAPPDATA\foobar2000-v2"
+
 fb2k_done:
 
+    StrCpy $INSTDIR "$OBSPath"
+
+FunctionEnd
+
+; --- Page 1 leave: save OBS path before page 2 ---
+Function obs_page_leave
+    StrCpy $OBSPath "$INSTDIR"
+FunctionEnd
+
+; --- Page 2: foobar2000 custom browse ---
+Function fb2k_page_show
+
+    StrCpy $FB2KDirText "$FB2KPath"
+
+    nsDialogs::Create 1018
+    Pop $0
+
+    ${NSD_CreateLabel} 0 0 100% 20u "foobar2000 installation folder:"
+    Pop $0
+
+    ${NSD_CreateDirRequest} 0 20u 80% 12u "$FB2KPath"
+    Pop $FB2KDirHWND
+
+    ${NSD_CreateBrowseButton} 82u 20u 18% 12u "Browse..."
+    Pop $0
+    ${NSD_OnClick} $0 fb2k_browse_click
+
+    nsDialogs::Show
+
+FunctionEnd
+
+Function fb2k_browse_click
+    nsDialogs::SelectFolderDialog "Select foobar2000 installation folder" "$FB2KPath"
+    Pop $FB2KPath
+    StrCmp $FB2KPath "" 0 fb2k_browse_done
+    StrCpy $FB2KPath "$FB2KDirText"
+fb2k_browse_done:
+    ${NSD_SetText} $FB2KDirHWND "$FB2KPath"
+FunctionEnd
+
+Function fb2k_page_leave
+    ${NSD_GetText} $FB2KDirHWND $FB2KPath
 FunctionEnd
 
 Section "Install"
 
-    StrCpy $0 "$INSTDIR"
+    StrCpy $0 "$OBSPath"
+    StrCpy $2 "$FB2KPath"
 
     IfFileExists "$0\bin\64bit\obs64.exe" obs_ok obs_fail
 
 obs_fail:
-    MessageBox MB_ICONSTOP "Invalid OBS folder selected"
+    MessageBox MB_ICONSTOP "Invalid OBS folder: $0"
     Abort
 
 obs_ok:
 
-    ; --------------------------
-    ; INSTALL OBS PLUGIN
-    ; --------------------------
     SetOutPath "$0\obs-plugins\64bit"
     File "build_x64\rundir\RelWithDebInfo\foobar2000-obs.dll"
     File "build_x64\rundir\RelWithDebInfo\foobar2000-obs.pdb"
@@ -118,26 +161,20 @@ obs_ok:
     SetOutPath "$0\data\obs-plugins\foobar2000-obs\locale"
     File "build_x64\rundir\RelWithDebInfo\foobar2000-obs\locale\en-US.ini"
 
-    ; --------------------------
-    ; INSTALL FOOBAR2000 BRIDGE COMPONENT
-    ; --------------------------
-    StrCpy $1 "$FB2KPath"
-
-    IfFileExists "$1\foobar2000.exe" fb2k_ok fb2k_skip
+    IfFileExists "$2\foobar2000.exe" fb2k_ok fb2k_skip
 
 fb2k_skip:
-    MessageBox MB_OK "foobar2000 not found. Skipping bridge component.$\n$\nTo install manually, copy foo_obsbridge.dll to your foobar2000 components folder."
+    MessageBox MB_OK "foobar2000 not found in selected folder. Bridge component skipped.$\n$\nCopy foo_obsbridge.dll to your foobar2000 components folder manually."
     Goto done
 
 fb2k_ok:
 
-    ; Components folder is always next to foobar2000.exe (works for portable + standard)
-    StrCpy $2 "$FB2KPath\components"
-    CreateDirectory "$2"
-    SetOutPath "$2"
+    StrCpy $3 "$2\components"
+    CreateDirectory "$3"
+    SetOutPath "$3"
     File "build_x64\out\foo_obsbridge.dll"
 
-    MessageBox MB_OK "foobar2000 bridge component installed.$\n$\nRestart foobar2000 to activate."
+    MessageBox MB_OK "foobar2000-obs installed successfully.$\n$\nOBS plugin: $0$\nfoobar2000 bridge: $3$\n$\nRestart both OBS and foobar2000 to activate."
 
 done:
 
