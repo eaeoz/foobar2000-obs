@@ -6,6 +6,8 @@ project(${_name} VERSION ${_version})
 
 option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" OFF)
 option(ENABLE_QT "Use Qt functionality" OFF)
+option(BUILD_FOOBAR2000_BRIDGE
+       "Build foobar2000 bridge component (requires FOOBAR2000_SDK_DIR)" OFF)
 
 include(compilerconfig)
 include(defaults)
@@ -40,3 +42,7 @@ endif()
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.c src/foobar2000-source.cpp)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
+
+if(BUILD_FOOBAR2000_BRIDGE)
+  add_subdirectory(src/foobar2000-bridge)
+endif()
