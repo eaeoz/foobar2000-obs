@@ -17,6 +17,7 @@
 !README.md
 !script.nsi
 !sample.png
+!sample2.png
 
 # Exclude lock files
 *.lock.json
