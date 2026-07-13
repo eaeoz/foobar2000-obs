@@ -94,8 +94,11 @@ The overlay is 750x300 px. Scale or position as needed.
 - Visual Studio 2022+ with **Desktop development with C++** workload
 - CMake 3.28+ (bundled with Visual Studio)
 - Git
+
+### Main Output Targeted Files
+
 - OBS plugin: `build_x64/RelWithDebInfo/foobar2000-obs.dll`
-- Bridge component: `build_x64/out/foo_obsbridge.dll`
+- Bridge component for foobar2000: `build_x64/out/foo_obsbridge.dll`
 
 ### Build installer
 
